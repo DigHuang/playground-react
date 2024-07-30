@@ -1,12 +1,18 @@
+import './index.scss';
+
 import { Allotment } from 'allotment';
 import 'allotment/dist/style.css';
 import Header from '../../components/Header';
 import CodeEditor from '../../components/CodeEditor';
 import Preview from '../../components/Preview';
+import { useContext } from 'react';
+import { PlaygroundContext } from '../../contexts/PlaygroundContext';
 
 export default function ReactPlayground() {
+  const { theme } = useContext(PlaygroundContext);
+
   return (
-    <div style={{ height: '100vh' }}>
+    <div className={theme} style={{ height: '100vh' }}>
       <Header />
       <Allotment defaultSizes={[100, 100]}>
         <Allotment.Pane minSize={0}>
