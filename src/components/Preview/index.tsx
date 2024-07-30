@@ -1,10 +1,12 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import { PlaygroundContext } from '../../contexts/PlaygroundContext';
-import { compile } from './compiler';
+// import { compile } from './compiler';
+import CompilerWorker from './compiler.worker?worker';
 
 import iframeRaw from './iframe.html?raw';
 import { IMPORT_MAP_FILE_NAME } from '../../mock/files';
 import Message from '../Message';
+import { debounce } from 'lodash-es';
 
 interface MessageData {
   data: {
@@ -20,10 +22,26 @@ export default function Preview() {
   const [iframeUrl, setIframeUrl] = useState<string>();
   const [error, setError] = useState('');
 
+  const compilerWorkerRef = useRef<Worker>();
   useEffect(() => {
-    const res = compile(files);
-    setCompiledCode(res);
-  }, [files]);
+    if (!compilerWorkerRef.current) {
+      compilerWorkerRef.current = new CompilerWorker();
+      compilerWorkerRef.current.addEventListener('message', ({ data }) => {
+        if (data.type === 'COMPILED_CODES') {
+          setCompiledCode(data.data);
+        } else {
+          console.error('error', data);
+        }
+      });
+    }
+  }, []);
+
+  useEffect(
+    debounce(() => {
+      compilerWorkerRef.current?.postMessage(files);
+    }, 500),
+    [files]
+  );
 
   const getIframeUrl = () => {
     // console.log('🚀 ~ Preview ~ files:', files);
